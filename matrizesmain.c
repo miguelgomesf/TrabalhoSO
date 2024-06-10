@@ -11,24 +11,34 @@ void preencherMatriz(float *matriz, int indice) {
 
 
 void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
-    FILE *arquivo = fopen(nomeArquivo, "rb");
+    FILE *arquivo = fopen(nomeArquivo, "r");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo %s\n", nomeArquivo);
         exit(1);
     }
-    fread(matriz, sizeof(float), indice, arquivo);
+    for (int i = 0; i < indice; i++) {
+        for (int j = 0; j < indice; j++) {
+            fscanf(arquivo, "%f", &matriz[i]);
+        }
+    }
     fclose(arquivo);
 }
 
 void escreverMatriz(const char *nomeArquivo, float *matriz, int indice) {
-    FILE *arquivo = fopen(nomeArquivo, "wb");
+    FILE *arquivo = fopen(nomeArquivo, "w");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo %s\n", nomeArquivo);
         exit(1);
     }
-    fwrite(matriz, sizeof(float), indice, arquivo);
+    for (int i = 0; i < indice; i++) {
+        for (int j = 0; j < indice; j++) {
+            fprintf(arquivo, "%.2f ", matriz[i]);
+        }
+        fprintf(arquivo, "\n");
+    }
     fclose(arquivo);
 }
+
 
 void somaMatrizes(float *matriz1, float *matriz2, float *matrizResultado, int indice) {
     for(int i = 0; i < indice; i++) {
@@ -57,17 +67,6 @@ void reducao(float *matriz, int indice) {
     printf("Reducao: %.2f\n", resultadoReducao);
 }
 
-void imprimirMatriz(float *matriz, int indice, const char *nome) {
-    printf("Matriz %s:\n", nome);
-    for (int i = 0; i < indice; i++) {
-        printf("%.2f ", matriz[i]);
-        if ((i + 1) % (int)sqrt(indice) == 0) {
-            printf("\n");
-        }
-    }
-    printf("\n");
-}
-
 int main(int argc, char *argv[]) {
     if (argc < 8) {
     printf("Erro: Número incorreto de argumentos.\n");
@@ -93,10 +92,6 @@ int main(int argc, char *argv[]) {
     lerMatriz(argv[3], matrizA, tamanho);
     lerMatriz(argv[4], matrizB, tamanho);
 
-    imprimirMatriz(matrizA, tamanho, "A");
-    imprimirMatriz(matrizB, tamanho, "B");
-
-
     float *matrizD;
     matrizD = (float *) malloc(tamanho * sizeof(float));
     somaMatrizes(matrizA, matrizB, matrizD, tamanho);
@@ -120,6 +115,6 @@ int main(int argc, char *argv[]) {
     free(matrizC);
     free(matrizD);
     free(matrizE);
-
+    
     return 0;
 }
