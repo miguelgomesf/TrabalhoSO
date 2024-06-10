@@ -2,78 +2,87 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-int t, n;
 int i, j, k = 0;
 
-void lerMatriz(const char *nomeArquivo, float *matriz, int tamanho) {
-    FILE *arquivo = fopen(*nomeArquivo, "rb");
+void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
+    FILE *arquivo = fopen(nomeArquivo, "rb");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo %s\n", nomeArquivo);
         exit(1);
     }
-    fread(matriz, sizeof(float), tamanho, arquivo);
+    fread(matriz, sizeof(float), indice, arquivo);
     fclose(arquivo);
 }
 
-void escreverMatriz(const char *nomeArquivo, float *matriz, int tamanho) {
-    FILE *arquivo = fopen(*nomeArquivo, "wb");
+void escreverMatriz(const char *nomeArquivo, float *matriz, int indice) {
+    FILE *arquivo = fopen(nomeArquivo, "wb");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo %s\n", nomeArquivo);
         exit(1);
     }
-    fwrite(matriz, sizeof(float), tamanho, arquivo);
+    fwrite(matriz, sizeof(float), indice, arquivo);
     fclose(arquivo);
 }
 
 void somaMatrizes(float *matriz1, float *matriz2, float *matrizResultado, int indice) {
-    for(i = 0; i < tamanho; i++) {
-        matrizResultado = matriz1 + matriz2;
+    for(i = 0; i < indice; i++) {
+        matrizResultado[i] = matriz1[i] + matriz2[i];
     }
 }
 
 void multiplicaMatrizes(float *matriz1, float *matriz2, float *matrizResultado, int indice) {
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++)
+    for (i = 0; i < indice; i++) {
+        for (j = 0; j < indice; j++)
         {
             float calculo = 0;
-            for (int k = 0; k < n; k++) {
-                calculo += matriz1[i * n + k] * matriz2[k * n + j];
+            for (int k = 0; k < indice; k++) {
+                calculo += matriz1[i * indice + k] * matriz2[k * indice + j];
             }
-            matrizResultado[i * n + j] = calculo;
+            matrizResultado[i * indice + j] = calculo;
         } 
     }
 }
 
 void reducao(float *matriz, int indice) {
     int resultadoReducao = 0;
-    for (i = 0; i < tamanho; i++) {
-            int resultadoReducao += matriz*; 
+    for (i = 0; i < indice; i++) {
+            resultadoReducao += matriz[i]; 
     }
 }
 
-int main(argc, *argv[]) {
-    float *matrizA, *matrizB;
-    matrizA = (float *) malloc(n * n * sizeof(float));
-    matrizB = (float *) malloc(n * n * sizeof(float));
+int main(int argc, char *argv[]) {
+
+    int t = atoi(argv[1]);
+    int n = atoi(argv[2]);
 
     int tamanho = n * n;
 
-    lerMatriz(arqA, matrizA, tamanho);
-    lerMatriz(arqB, matrizB, tamanho);
+    float *matrizA, *matrizB;
+    matrizA = (float *) malloc(tamanho * sizeof(float));
+    matrizB = (float *) malloc(tamanho * sizeof(float));
+
+    lerMatriz(argv[3], matrizA, tamanho);
+    lerMatriz(argv[4], matrizB, tamanho);
 
     float *matrizD;
     matrizD = (float *) malloc(tamanho * sizeof(float));
     somaMatrizes(matrizA, matrizB, matrizD, n);
-    escreverMatriz(arqD, matrizD, tamanho);
+    escreverMatriz(argv[6], matrizD, tamanho);
 
     float *matrizC;
     matrizC = (float *) malloc(tamanho * sizeof(float));
-    lerMatriz(arqC, matrizC, tamanho);
+    lerMatriz(argv[5], matrizC, tamanho);
 
     float *matrizE;
     matrizE = (float *) malloc(tamanho * sizeof(float));
     multiplicaMatrizes(matrizC, matrizD, matrizE, n);
-    escreverMatriz(arqE, matrizE, tamanho);
+    escreverMatriz(argv[7], matrizE, tamanho);
+
+    free(matrizA);
+    free(matrizB);
+    free(matrizC);
+    free(matrizD);
+    free(matrizE);
 
     return 0;
 }
