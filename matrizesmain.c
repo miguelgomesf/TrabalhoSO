@@ -4,6 +4,24 @@
 
 int i, j, k = 0;
 
+void preencherMatriz(const char *nomeArquivo, float *matriz, int indice) {
+  FILE *arquivo = fopen(nomeArquivo, "wb");
+  if (arquivo == NULL) {
+    printf("Erro ao abrir o arquivo %s para escrita.\n", nomeArquivo);
+    exit(1);
+  }
+
+  for (int i = 0; i < indice; i++) {
+    for (int j = 0; j < indice; j++) {
+      matriz[i * indice + j] = rand() / (float) RAND_MAX;
+    }
+  }
+
+  fwrite(matriz, sizeof(float), indice * indice, arquivo);
+  fclose(arquivo);
+}
+
+
 void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
     FILE *arquivo = fopen(nomeArquivo, "rb");
     if (arquivo == NULL) {
@@ -61,6 +79,9 @@ int main(int argc, char *argv[]) {
     matrizA = (float *) malloc(tamanho * sizeof(float));
     matrizB = (float *) malloc(tamanho * sizeof(float));
 
+    preencherMatriz(argv[3], matrizA, n);
+    preencherMatriz(argv[3], matrizB, n);
+
     lerMatriz(argv[3], matrizA, tamanho);
     lerMatriz(argv[4], matrizB, tamanho);
 
@@ -71,6 +92,7 @@ int main(int argc, char *argv[]) {
 
     float *matrizC;
     matrizC = (float *) malloc(tamanho * sizeof(float));
+    preencherMatriz(argv[3], matrizC, n);
     lerMatriz(argv[5], matrizC, tamanho);
 
     float *matrizE;
