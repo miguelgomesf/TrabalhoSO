@@ -83,8 +83,8 @@ int main(int argc, char *argv[]) {
     matrizA = (float *) malloc(tamanho * sizeof(float));
     matrizB = (float *) malloc(tamanho * sizeof(float));
 
-    preencherMatriz(matrizA, tamanho);
-    preencherMatriz(matrizB, tamanho);
+    preencherMatriz(matrizA, n);
+    preencherMatriz(matrizB, n);
 
     escreverMatriz(argv[3], matrizA, tamanho);
     escreverMatriz(argv[4], matrizB, tamanho);
