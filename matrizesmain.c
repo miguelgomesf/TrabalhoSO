@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
 
 void preencherMatriz(float *matriz, int indice) {
-  for (int i = 0; i < indice; i++) {
-      matriz[i] = (float) rand() / RAND_MAX;
-  }
+    for (int i = 0; i < indice; i++) {
+        for (int j = 0; j < indice; j++) {
+            matriz[i * indice + j] = (float)rand() / RAND_MAX;
+        }
+    }
 }
 
 
@@ -18,7 +19,7 @@ void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
     }
     for (int i = 0; i < indice; i++) {
         for (int j = 0; j < indice; j++) {
-            fscanf(arquivo, "%f", &matriz[i]);
+            fscanf(arquivo, "%f", &matriz[i * indice + j]);
         }
     }
     fclose(arquivo);
@@ -32,7 +33,7 @@ void escreverMatriz(const char *nomeArquivo, float *matriz, int indice) {
     }
     for (int i = 0; i < indice; i++) {
         for (int j = 0; j < indice; j++) {
-            fprintf(arquivo, "%.2f ", matriz[i]);
+            fprintf(arquivo, "%.2f ", matriz[i * indice + j]);
         }
         fprintf(arquivo, "\n");
     }
@@ -42,7 +43,9 @@ void escreverMatriz(const char *nomeArquivo, float *matriz, int indice) {
 
 void somaMatrizes(float *matriz1, float *matriz2, float *matrizResultado, int indice) {
     for(int i = 0; i < indice; i++) {
-        matrizResultado[i] = matriz1[i] + matriz2[i];
+        for(int j = 0; j < indice; j++) {
+        matrizResultado[i * indice + j] = matriz1[i * indice + j] + matriz2[i * indice + j];
+        }
     }
 }
 
@@ -79,9 +82,10 @@ int main(int argc, char *argv[]) {
 
     srand(time(NULL));
 
-    float *matrizA, *matrizB;
-    matrizA = (float *) malloc(tamanho * sizeof(float));
-    matrizB = (float *) malloc(tamanho * sizeof(float));
+    float *matrizA;
+    float *matrizB;
+    matrizA = (float *) malloc(n * n * sizeof(float));
+    matrizB = (float *) malloc(n * n * sizeof(float));
 
     preencherMatriz(matrizA, n);
     preencherMatriz(matrizB, n);
@@ -93,18 +97,18 @@ int main(int argc, char *argv[]) {
     lerMatriz(argv[4], matrizB, tamanho);
 
     float *matrizD;
-    matrizD = (float *) malloc(tamanho * sizeof(float));
+    matrizD = (float *) malloc(n * n * sizeof(float));
     somaMatrizes(matrizA, matrizB, matrizD, tamanho);
     escreverMatriz(argv[6], matrizD, tamanho);
 
     float *matrizC;
-    matrizC = (float *) malloc(tamanho * sizeof(float));
+    matrizC = (float *) malloc(n * n * sizeof(float));
     preencherMatriz(matrizC, tamanho);
     escreverMatriz(argv[5], matrizC, tamanho);
     lerMatriz(argv[5], matrizC, tamanho);
 
     float *matrizE;
-    matrizE = (float *) malloc(tamanho * sizeof(float));
+    matrizE = (float *) malloc(n * n * sizeof(float));
     multiplicaMatrizes(matrizC, matrizD, matrizE, n);
     escreverMatriz(argv[7], matrizE, tamanho);
 
