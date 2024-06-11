@@ -90,27 +90,27 @@ int main(int argc, char *argv[]) {
     preencherMatriz(matrizA, n);
     preencherMatriz(matrizB, n);
 
-    escreverMatriz(argv[3], matrizA, tamanho);
-    escreverMatriz(argv[4], matrizB, tamanho);
+    escreverMatriz(argv[3], matrizA, n);
+    escreverMatriz(argv[4], matrizB, n);
 
-    lerMatriz(argv[3], matrizA, tamanho);
-    lerMatriz(argv[4], matrizB, tamanho);
+    lerMatriz(argv[3], matrizA, n);
+    lerMatriz(argv[4], matrizB, n);
 
     float *matrizD;
     matrizD = (float *) malloc(n * n * sizeof(float));
-    somaMatrizes(matrizA, matrizB, matrizD, tamanho);
-    escreverMatriz(argv[6], matrizD, tamanho);
+    somaMatrizes(matrizA, matrizB, matrizD, n);
+    escreverMatriz(argv[6], matrizD, n);
 
     float *matrizC;
     matrizC = (float *) malloc(n * n * sizeof(float));
-    preencherMatriz(matrizC, tamanho);
-    escreverMatriz(argv[5], matrizC, tamanho);
-    lerMatriz(argv[5], matrizC, tamanho);
+    preencherMatriz(matrizC, n);
+    escreverMatriz(argv[5], matrizC, n);
+    lerMatriz(argv[5], matrizC, n);
 
     float *matrizE;
     matrizE = (float *) malloc(n * n * sizeof(float));
     multiplicaMatrizes(matrizC, matrizD, matrizE, n);
-    escreverMatriz(argv[7], matrizE, tamanho);
+    escreverMatriz(argv[7], matrizE, n);
 
     reducao(matrizE, tamanho);
 
