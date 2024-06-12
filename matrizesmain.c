@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+
 void preencherMatriz(float *matriz, int indice) {
     for (int i = 0; i < indice; i++) {
         for (int j = 0; j < indice; j++) {
