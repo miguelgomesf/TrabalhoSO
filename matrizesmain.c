@@ -2,16 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-
-void preencherMatriz(float *matriz, int indice) {
-    for (int i = 0; i < indice; i++) {
-        for (int j = 0; j < indice; j++) {
-            matriz[i * indice + j] = (float)rand() / RAND_MAX;
-        }
-    }
-}
-
-
 void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
     FILE *arquivo = fopen(nomeArquivo, "r");
     if (arquivo == NULL) {
@@ -87,13 +77,6 @@ int main(int argc, char *argv[]) {
     float *matrizB;
     matrizA = (float *) malloc(n * n * sizeof(float));
     matrizB = (float *) malloc(n * n * sizeof(float));
-
-    preencherMatriz(matrizA, n);
-    preencherMatriz(matrizB, n);
-
-    escreverMatriz(argv[3], matrizA, n);
-    escreverMatriz(argv[4], matrizB, n);
-
     lerMatriz(argv[3], matrizA, n);
     lerMatriz(argv[4], matrizB, n);
 
@@ -104,8 +87,6 @@ int main(int argc, char *argv[]) {
 
     float *matrizC;
     matrizC = (float *) malloc(n * n * sizeof(float));
-    preencherMatriz(matrizC, n);
-    escreverMatriz(argv[5], matrizC, n);
     lerMatriz(argv[5], matrizC, n);
 
     float *matrizE;
