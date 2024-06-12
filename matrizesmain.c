@@ -1,36 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <pthread.h>
 
-void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
-    FILE *arquivo = fopen(nomeArquivo, "r");
+typedef struct {
+    const char *nomeArquivo;
+    float *matriz;
+    int indice;
+} ArqArgs;
+
+void *lerMatriz(void *arg) {
+    ArqArgs *args = (ArqArgs *)arg;
+    FILE *arquivo = fopen(args->nomeArquivo, "r");
     if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo %s\n", nomeArquivo);
+        printf("Erro ao abrir o arquivo %s\n", args->nomeArquivo);
         exit(1);
     }
-    for (int i = 0; i < indice; i++) {
-        for (int j = 0; j < indice; j++) {
-            fscanf(arquivo, "%f", &matriz[i * indice + j]);
+    for (int i = 0; i < args->indice; i++) {
+        for (int j = 0; j < args->indice; j++) {
+            fscanf(arquivo, "%f", &args->matriz[i * args->indice + j]);
         }
     }
     fclose(arquivo);
 }
 
-void escreverMatriz(const char *nomeArquivo, float *matriz, int indice) {
-    FILE *arquivo = fopen(nomeArquivo, "w");
+void *escreverMatriz(void *arg) {
+    ArqArgs *args = (ArqArgs *)arg;
+    FILE *arquivo = fopen(args->nomeArquivo, "w");
     if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo %s\n", nomeArquivo);
+        printf("Erro ao abrir o arquivo %s\n", args->nomeArquivo);
         exit(1);
     }
-    for (int i = 0; i < indice; i++) {
-        for (int j = 0; j < indice; j++) {
-            fprintf(arquivo, "%.2f ", matriz[i * indice + j]);
+    for (int i = 0; i < args->indice; i++) {
+        for (int j = 0; j < args->indice; j++) {
+            fprintf(arquivo, "%.2f ", args->matriz[i * args->indice + j]);
         }
         fprintf(arquivo, "\n");
     }
     fclose(arquivo);
 }
-
 
 void somaMatrizes(float *matriz1, float *matriz2, float *matrizResultado, int indice) {
     for(int i = 0; i < indice; i++) {
@@ -71,28 +78,41 @@ int main(int argc, char *argv[]) {
     int n = atoi(argv[2]);
     int tamanho = n * n;
 
-    srand(time(NULL));
+    pthread_t threads[5 + t];
 
     float *matrizA;
     float *matrizB;
     matrizA = (float *) malloc(n * n * sizeof(float));
     matrizB = (float *) malloc(n * n * sizeof(float));
-    lerMatriz(argv[3], matrizA, n);
-    lerMatriz(argv[4], matrizB, n);
+
+    ArqArgs readA = {argv[3], matrizA, n};
+    ArqArgs readB = {argv[4], matrizB, n};
+    pthread_create(&threads[0], NULL, lerMatriz, &readA);
+    pthread_create(&threads[1], NULL, lerMatriz, &readB);
+    pthread_join(threads[0], NULL);
+    pthread_join(threads[1], NULL);
 
     float *matrizD;
     matrizD = (float *) malloc(n * n * sizeof(float));
     somaMatrizes(matrizA, matrizB, matrizD, n);
-    escreverMatriz(argv[6], matrizD, n);
+    ArqArgs writeD = {argv[6], matrizD, n};
+    pthread_create(&threads[2], NULL, escreverMatriz, &writeD);
+    pthread_join(threads[2], NULL);
+
 
     float *matrizC;
     matrizC = (float *) malloc(n * n * sizeof(float));
-    lerMatriz(argv[5], matrizC, n);
+    ArqArgs readC = {argv[5], matrizC, n};
+    pthread_create(&threads[3], NULL, lerMatriz, &readC);
+    pthread_join(threads[3], NULL);
+
 
     float *matrizE;
     matrizE = (float *) malloc(n * n * sizeof(float));
     multiplicaMatrizes(matrizC, matrizD, matrizE, n);
-    escreverMatriz(argv[7], matrizE, n);
+    ArqArgs writeE = {argv[7], matrizE, n};
+    pthread_create(&threads[4], NULL, escreverMatriz, &writeE);
+    pthread_join(threads[4], NULL);
 
     reducao(matrizE, tamanho);
 
