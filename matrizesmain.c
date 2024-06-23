@@ -21,7 +21,7 @@ typedef struct {
     float *matriz;
     int inicio;
     int fim;
-    float resultado;
+    float *resultado;
 } ReducaoArgs;
 
 void lerMatriz(const char *nomeArquivo, float *matriz, int indice) {
@@ -46,9 +46,14 @@ void escreverMatriz(const char *nomeArquivo, float *matriz, int indice) {
     }
     for (int i = 0; i < indice; i++) {
         for (int j = 0; j < indice; j++) {
-            fprintf(arquivo, "%.2f ", matriz[i * indice + j]);
+            fprintf(arquivo, "%.2f", matriz[i * indice + j]);
+            if (j < indice - 1) {
+                fprintf(arquivo, " ");
+            }
         }
-        fprintf(arquivo, "\n");
+        if (i < indice - 1) {
+            fprintf(arquivo, "\n");
+        }
     }
     fclose(arquivo);
 }
@@ -77,12 +82,18 @@ void *escreverMatrizThread(void *arg) {
     }
     for (int i = 0; i < args->indice; i++) {
         for (int j = 0; j < args->indice; j++) {
-            fprintf(arquivo, "%.2f ", args->matriz[i * args->indice + j]);
+            fprintf(arquivo, "%.2f", args->matriz[i * args->indice + j]);
+            if (j < args->indice - 1) {
+                fprintf(arquivo, " ");
+            }
         }
-        fprintf(arquivo, "\n");
+        if (i < args->indice - 1) {
+            fprintf(arquivo, "\n");
+        }
     }
     fclose(arquivo);
 }
+
 
 void somaMatrizes(float *matriz1, float *matriz2, float *matrizResultado, int indice) {
     for(int i = 0; i < indice; i++) {
@@ -143,8 +154,105 @@ void *reducaoThread(void *arg) {
     for (int i = args->inicio; i < args->fim; i++) {
             resultadoReducao += args->matriz[i]; 
     }
-    args->resultado = resultadoReducao;
+    *args->resultado = resultadoReducao;
     return NULL;
+}
+
+void executarSemThreads(const char *arquivoA, const char *arquivoB, const char *arquivoC, const char *arquivoD, const char *arquivoE, int indice) {
+    float *matrizA = (float *) malloc(indice * indice * sizeof(float));
+    float *matrizB = (float *) malloc(indice * indice * sizeof(float));
+    lerMatriz(arquivoA, matrizA, indice);
+    lerMatriz(arquivoB, matrizB, indice);
+
+    float *matrizD = (float *) malloc(indice * indice * sizeof(float));
+    somaMatrizes(matrizA, matrizB, matrizD, indice);
+    escreverMatriz(arquivoD, matrizD, indice);
+
+    float *matrizC = (float *) malloc(indice * indice * sizeof(float));
+    lerMatriz(arquivoC, matrizC, indice);
+
+    float *matrizE = (float *) malloc(indice * indice * sizeof(float));
+    multiplicaMatrizes(matrizC, matrizD, matrizE, indice);
+    escreverMatriz(arquivoE, matrizE, indice);
+
+    reducao(matrizE, indice * indice);
+
+    free(matrizA);
+    free(matrizB);
+    free(matrizC);
+    free(matrizD);
+    free(matrizE);
+
+}
+
+void executarComThreads(const char *arquivoA, const char *arquivoB, const char *arquivoC, const char *arquivoD, const char *arquivoE, int indice, int nthreads) {
+    int divisao = indice / nthreads;
+    pthread_t threads[5 + nthreads];
+
+    float *matrizA = (float *) malloc(indice * indice * sizeof(float));
+    float *matrizB = (float *) malloc(indice * indice * sizeof(float));
+
+    ArqArgs readA = {arquivoA, matrizA, indice};
+    ArqArgs readB = {arquivoB, matrizB, indice};
+    pthread_create(&threads[0], NULL, lerMatrizThread, &readA);
+    pthread_create(&threads[1], NULL, lerMatrizThread, &readB);
+    pthread_join(threads[0], NULL);
+    pthread_join(threads[1], NULL);
+
+    float *matrizD = (float *) malloc(indice * indice * sizeof(float));
+
+    SomaMultArgs somaArgs[nthreads];
+    for (int i = 0; i < nthreads; i++) {
+        somaArgs[i] = (SomaMultArgs){matrizA, matrizB, matrizD, i * divisao, (i + 1) * divisao, indice};
+        pthread_create(&threads[2 + i], NULL, somaMatrizesThread, &somaArgs[i]);
+    }
+    for (int i = 0; i < nthreads; i++) {
+        pthread_join(threads[2 + i], NULL);
+    }
+    ArqArgs writeD = {arquivoD, matrizD, indice};
+    pthread_create(&threads[2 + nthreads], NULL, escreverMatrizThread, &writeD);
+    pthread_join(threads[2 + nthreads], NULL);
+
+    float *matrizC = (float *) malloc(indice * indice * sizeof(float));
+
+    ArqArgs readC = {arquivoC, matrizC, nthreads};
+    pthread_create(&threads[3 + nthreads], NULL, lerMatrizThread, &readC);
+    pthread_join(threads[3 + nthreads], NULL);
+
+    float *matrizE = (float *) malloc(indice * indice * sizeof(float));
+
+    SomaMultArgs multArgs[nthreads];
+    for (int i = 0; i < nthreads; i++) {
+        multArgs[i] = (SomaMultArgs){matrizC, matrizD, matrizE, i * divisao, (i + 1) * divisao, indice};
+        pthread_create(&threads[4 + nthreads + i], NULL, multiplicaMatrizesThread, &multArgs[i]);
+    }
+    for (int i = 0; i < nthreads; i++) {
+        pthread_join(threads[4 + nthreads + i], NULL);
+    }
+    ArqArgs writeE = {arquivoE, matrizE, indice};
+    pthread_create(&threads[4 + nthreads + nthreads], NULL, escreverMatrizThread, &writeE);
+    pthread_join(threads[4 + nthreads + nthreads], NULL);
+
+    float resultados[nthreads];
+    ReducaoArgs redArgs[nthreads];
+    for (int i = 0; i < nthreads; i++) {
+        redArgs[i] = (ReducaoArgs){matrizE, i * divisao * indice, (i + 1) * divisao * indice, &resultados[i]};
+        pthread_create(&threads[4 + nthreads + nthreads + i], NULL, reducaoThread, &redArgs[i]);
+    }
+    
+    float resultadoTotalReducao = 0;
+    for (int i = 0; i < nthreads; i++) {
+        pthread_join(threads[4 + nthreads + nthreads + i], NULL);
+        resultadoTotalReducao += resultados[i];
+    }
+
+    printf("Reducao: %.2f\n", resultadoTotalReducao);
+
+    free(matrizA);
+    free(matrizB);
+    free(matrizC);
+    free(matrizD);
+    free(matrizE);
 }
 
 int main(int argc, char *argv[]) {
@@ -155,80 +263,11 @@ int main(int argc, char *argv[]) {
 
     int t = atoi(argv[1]);
     int n = atoi(argv[2]);
-    int tamanho = n * n;
-    int divisao = n/t;
-
-    pthread_t threads[5 + t];
-
-    float *matrizA;
-    float *matrizB;
-    matrizA = (float *) malloc(n * n * sizeof(float));
-    matrizB = (float *) malloc(n * n * sizeof(float));
-
-    ArqArgs readA = {argv[3], matrizA, n};
-    ArqArgs readB = {argv[4], matrizB, n};
-    pthread_create(&threads[0], NULL, lerMatrizThread, &readA);
-    pthread_create(&threads[1], NULL, lerMatrizThread, &readB);
-    pthread_join(threads[0], NULL);
-    pthread_join(threads[1], NULL);
-
-    float *matrizD;
-    matrizD = (float *) malloc(n * n * sizeof(float));
     
-    SomaMultArgs somaArgs[t];
-    for (int i = 0; i < t; i++) {
-        somaArgs[i] = (SomaMultArgs){matrizA, matrizB, matrizD, i * divisao, (i + 1) * divisao, n};
-        pthread_create(&threads[2 + i], NULL, somaMatrizesThread, &somaArgs[i]);
-    }
-    for (int i = 0; i < t; i++) {
-        pthread_join(threads[2 + i], NULL);
-    }
-
-    ArqArgs writeD = {argv[6], matrizD, n};
-    pthread_create(&threads[2 + t], NULL, escreverMatrizThread, &writeD);
-    pthread_join(threads[2 + t], NULL);
-
-    float *matrizC;
-    matrizC = (float *) malloc(n * n * sizeof(float));
-    ArqArgs readC = {argv[5], matrizC, n};
-    pthread_create(&threads[3 + t], NULL, lerMatrizThread, &readC);
-    pthread_join(threads[3 + t], NULL);
-
-    float *matrizE;
-    matrizE = (float *) malloc(n * n * sizeof(float));
-    
-    SomaMultArgs multArgs[t];
-    for (int i = 0; i < t; i++) {
-        multArgs[i] = (SomaMultArgs){matrizC, matrizD, matrizE, i * divisao, (i + 1) * divisao, n};
-        pthread_create(&threads[4 + t + i], NULL, multiplicaMatrizesThread, &multArgs[i]);
-    }
-    for (int i = 0; i < t; i++) {
-        pthread_join(threads[4 + t + i], NULL);
-    }
-
-    ArqArgs writeE = {argv[7], matrizE, n};
-    pthread_create(&threads[4 + t + t], NULL, escreverMatrizThread, &writeE);
-    pthread_join(threads[4 + t + t], NULL);
-
-    ReducaoArgs redArgs[t];
-    for (int i = 0; i < t; i++) {
-        redArgs[i] = (ReducaoArgs){matrizE, i * divisao, (i + 1) * divisao, 0};
-        pthread_create(&threads[4 + t + t + i], NULL, reducaoThread, &redArgs[i]);
-    }
-    
-    float resultadoTotalReducao = 0;
-    for (int i = 0; i < t; i++) {
-        pthread_join(threads[4 + t + t + i], NULL);
-        resultadoTotalReducao += redArgs[i].resultado;
-    }
-
-    printf("Reducao: %.2f\n", resultadoTotalReducao);
-
-    free(matrizA);
-    free(matrizB);
-    free(matrizC);
-    free(matrizD);
-    free(matrizE);
+    if(t == 1)
+        executarSemThreads(argv[3], argv[4], argv[5], argv[6], argv[7], n);
+    else
+        executarComThreads(argv[3], argv[4], argv[5], argv[6], argv[7], n, t);
     
     return 0;
 }
