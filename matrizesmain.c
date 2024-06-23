@@ -154,6 +154,7 @@ void *reducaoThread(void *arg) {
     for (int i = args->inicio; i < args->fim; i++) {
             resultadoReducao += args->matriz[i]; 
     }
+    printf("Thread %ld: Soma parcial = %.2f\n", pthread_self(), resultadoReducao);
     *args->resultado = resultadoReducao;
     return NULL;
 }
@@ -215,7 +216,7 @@ void executarComThreads(const char *arquivoA, const char *arquivoB, const char *
 
     float *matrizC = (float *) malloc(indice * indice * sizeof(float));
 
-    ArqArgs readC = {arquivoC, matrizC, nthreads};
+    ArqArgs readC = {arquivoC, matrizC, indice};
     pthread_create(&threads[3 + nthreads], NULL, lerMatrizThread, &readC);
     pthread_join(threads[3 + nthreads], NULL);
 
@@ -237,12 +238,12 @@ void executarComThreads(const char *arquivoA, const char *arquivoB, const char *
     ReducaoArgs redArgs[nthreads];
     for (int i = 0; i < nthreads; i++) {
         redArgs[i] = (ReducaoArgs){matrizE, i * divisao * indice, (i + 1) * divisao * indice, &resultados[i]};
-        pthread_create(&threads[4 + nthreads + nthreads + i], NULL, reducaoThread, &redArgs[i]);
+        pthread_create(&threads[5 + nthreads + nthreads + i], NULL, reducaoThread, &redArgs[i]);
     }
     
     float resultadoTotalReducao = 0;
     for (int i = 0; i < nthreads; i++) {
-        pthread_join(threads[4 + nthreads + nthreads + i], NULL);
+        pthread_join(threads[5 + nthreads + nthreads + i], NULL);
         resultadoTotalReducao += resultados[i];
     }
 
@@ -263,11 +264,11 @@ int main(int argc, char *argv[]) {
 
     int t = atoi(argv[1]);
     int n = atoi(argv[2]);
-    
+
     if(t == 1)
         executarSemThreads(argv[3], argv[4], argv[5], argv[6], argv[7], n);
     else
         executarComThreads(argv[3], argv[4], argv[5], argv[6], argv[7], n, t);
-    
+
     return 0;
 }
