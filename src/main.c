@@ -1,3 +1,9 @@
+/*
+Grupo M
+Marcelo Expedito Costa de Oliveira 248007
+Miguel Gomes Fecchio 187871 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
