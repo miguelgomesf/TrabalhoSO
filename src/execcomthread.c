@@ -2,16 +2,20 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
-#include "comthread.c"
-#include "execcomthread.h"
+#include "../include/comthread.h"
+#include "../include/execcomthread.h"
 
 void executarComThreads(const char *arquivoA, const char *arquivoB, const char *arquivoC, const char *arquivoD, const char *arquivoE, int indice, int nthreads) {
-    int divisao = indice / nthreads;
-    pthread_t threads[5 + nthreads];
-
     int *matrizA = (int *) malloc(indice * indice * sizeof(int));
     int *matrizB = (int *) malloc(indice * indice * sizeof(int));
-
+    int *matrizC = (int *) malloc(indice * indice * sizeof(int));
+    int *matrizD = (int *) malloc(indice * indice * sizeof(int));
+    int *matrizE = (int *) malloc(indice * indice * sizeof(int));
+    
+    int divisao = indice / nthreads;
+    pthread_t threads[5 + 3 * nthreads];
+    
+    //Leitura das Matrizes A e B
     ArqArgs readA = {arquivoA, matrizA, indice};
     ArqArgs readB = {arquivoB, matrizB, indice};
     pthread_create(&threads[0], NULL, lerMatrizThread, &readA);
@@ -19,8 +23,7 @@ void executarComThreads(const char *arquivoA, const char *arquivoB, const char *
     pthread_join(threads[0], NULL);
     pthread_join(threads[1], NULL);
 
-    int *matrizD = (int *) malloc(indice * indice * sizeof(int));
-
+    //Soma das matrizes A e B resultando em D
     SomaMultArgs somaArgs[nthreads];
     clock_t inicioSoma = clock();
     double totalSoma;
@@ -31,20 +34,20 @@ void executarComThreads(const char *arquivoA, const char *arquivoB, const char *
     for (int i = 0; i < nthreads; i++) {
         pthread_join(threads[2 + i], NULL);
     }
-    clock_t fimSoma = clock();
-    totalSoma = ((double) (fimSoma - inicioSoma)/CLOCKS_PER_SEC);
+    clock_t fimSoma = clock() - inicioSoma;
+    totalSoma = ((double) (fimSoma)/CLOCKS_PER_SEC);
+    
+    //Escritura da matriz D
     ArqArgs writeD = {arquivoD, matrizD, indice};
     pthread_create(&threads[2 + nthreads], NULL, escreverMatrizThread, &writeD);
     pthread_join(threads[2 + nthreads], NULL);
 
-    int *matrizC = (int *) malloc(indice * indice * sizeof(int));
-
+    //Leitura da matriz C
     ArqArgs readC = {arquivoC, matrizC, indice};
     pthread_create(&threads[3 + nthreads], NULL, lerMatrizThread, &readC);
     pthread_join(threads[3 + nthreads], NULL);
 
-    int *matrizE = (int *) malloc(indice * indice * sizeof(int));
-
+    //Multiplicação das matrizes C e D resultando em E
     SomaMultArgs multArgs[nthreads];
     clock_t inicioMult = clock();
     double totalMult;
@@ -55,12 +58,15 @@ void executarComThreads(const char *arquivoA, const char *arquivoB, const char *
     for (int i = 0; i < nthreads; i++) {
         pthread_join(threads[4 + nthreads + i], NULL);
     }
-    clock_t fimMult = clock();
-    totalMult = ((double) (fimMult - inicioMult)/CLOCKS_PER_SEC);
+    clock_t fimMult = clock() - inicioMult;
+    totalMult = ((double) (fimMult)/CLOCKS_PER_SEC);
+    
+    //Escritura da matriz E
     ArqArgs writeE = {arquivoE, matrizE, indice};
     pthread_create(&threads[4 + nthreads + nthreads], NULL, escreverMatrizThread, &writeE);
     pthread_join(threads[4 + nthreads + nthreads], NULL);
 
+    //Redução da matriz E
     long int resultados[nthreads];
     ReducaoArgs redArgs[nthreads];
     clock_t inicioReducao = clock();
@@ -74,13 +80,13 @@ void executarComThreads(const char *arquivoA, const char *arquivoB, const char *
         pthread_join(threads[5 + nthreads + nthreads + i], NULL);
         resultadoTotalReducao += resultados[i];
     }
-    clock_t fimReducao = clock();
-    totalReducao = ((double) (fimReducao - inicioReducao)/CLOCKS_PER_SEC);
+    clock_t fimReducao = clock() - inicioReducao;
+    totalReducao = ((double) (fimReducao)/CLOCKS_PER_SEC);
 
-    printf("Reducao: %ld\n", resultadoTotalReducao);
+    printf("Redução: %ld\n", resultadoTotalReducao);
     printf("Tempo soma: %f segundos\n", totalSoma);
-    printf("Tempo multiplicacao: %f segundos\n", totalMult);
-    printf("Tempo reducao: %f segundos\n", totalReducao);
+    printf("Tempo multiplicação: %f segundos\n", totalMult);
+    printf("Tempo redução: %f segundos\n", totalReducao);
 
     free(matrizA);
     free(matrizB);

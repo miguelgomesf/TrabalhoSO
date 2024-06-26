@@ -1,6 +1,8 @@
 #ifndef COMTHREAD_H
 #define COMTHREAD_H
 
+#include <pthread.h>
+
 typedef struct {
     const char *nomeArquivo;
     int *matriz;

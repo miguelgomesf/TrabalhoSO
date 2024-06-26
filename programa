@@ -1,0 +1,10 @@
+#!/bin/bash
+if [ $2 -eq 100 ]; then
+  DIR=./arquivosmatrizes/arquivos100x100
+elif [ $2 -eq 1000 ]; then
+  DIR=./arquivosmatrizes/arquivos1000x1000
+else
+  echo "Argumento inválido: $2. Use 100 ou 1000." >&2
+  exit 1
+fi
+./bin/main_exec $1 $2 $DIR/$3 $DIR/$4 $DIR/$5 $DIR/$6 $DIR/$7

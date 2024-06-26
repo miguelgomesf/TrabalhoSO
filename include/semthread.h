@@ -1,5 +1,5 @@
-#ifndef MATRIZES_H
-#define MATRIZES_H
+#ifndef SEMTHREAD_H
+#define SEMTHREAD_H
 
 void lerMatriz(const char *nomeArquivo, int *matriz, int indice);
 void escreverMatriz(const char *nomeArquivo, int *matriz, int indice);

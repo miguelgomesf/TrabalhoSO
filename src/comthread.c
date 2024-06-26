@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "comthread.h"
+#include "../include/comthread.h"
 
 void *lerMatrizThread(void *arg) {
     ArqArgs *args = (ArqArgs *)arg;
@@ -15,6 +15,7 @@ void *lerMatrizThread(void *arg) {
         }
     }
     fclose(arquivo);
+    return NULL;
 }
 
 void *escreverMatrizThread(void *arg) {
@@ -27,15 +28,18 @@ void *escreverMatrizThread(void *arg) {
     for (int i = 0; i < args->indice; i++) {
         for (int j = 0; j < args->indice; j++) {
             fprintf(arquivo, "%d", args->matriz[i * args->indice + j]);
+            //Garante que não escreva espaços após o último elemento de cada linha da matriz
             if (j < args->indice - 1) {
                 fprintf(arquivo, " ");
             }
         }
+        //Garante que não haja quebra de linha após a última linha da matriz
         if (i < args->indice - 1) {
             fprintf(arquivo, "\n");
         }
     }
     fclose(arquivo);
+    return NULL;
 }
 
 void *somaMatrizesThread(void *arg) {
@@ -53,6 +57,7 @@ void *multiplicaMatrizesThread(void *arg) {
     for (int i = args->inicio; i < args->fim; i++) {
         for (int j = 0; j < args->indice; j++) {
             int calculo = 0;
+            //Multiplica linha da matriz1 com coluna da matriz2 e acumula a soma em calculo
             for (int k = 0; k < args->indice; k++) {
                 calculo += args->matriz1[i * args->indice + k] * args->matriz2[k * args->indice + j];
             }
